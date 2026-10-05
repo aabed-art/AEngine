@@ -1,0 +1,30 @@
+cmake_minimum_required(VERSION 3.10)
+
+project (GameDevelopmentProject)
+
+set(PROJECT_SOURCE_FILES
+  source/main.cpp
+  source/Game.h
+  source/Game.cpp
+  source/TestObject.h
+  source/TestObject.cpp
+)
+
+include_directories(engine/thirdparty/glew/include)
+
+# Add the application
+include_directories(source)
+add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_FILES})
+
+add_subdirectory(engine "${CMAKE_CURRENT_BINARY_DIR}/engine_build")
+include_directories(engine/source)
+
+include_directories(engine/thirdparty/glm-1.0.1)
+
+# Link engine library
+target_link_libraries(${PROJECT_NAME} 
+	Engine
+)
+
+
+

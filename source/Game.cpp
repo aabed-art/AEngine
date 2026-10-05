@@ -1,0 +1,21 @@
+#include "Game.h"
+#include <GLFW/glfw3.h>
+#include <iostream>
+#include <TestObject.h>
+
+bool Game::Init()
+{
+	m_scene.CreateObject<TestObject>("TestObject");
+
+	return true;
+}
+
+void Game::Update(float deltaTime)
+{
+	m_scene.Update(deltaTime);
+}
+
+void Game::Destroy()
+{
+
+}
