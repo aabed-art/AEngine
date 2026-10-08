@@ -23,6 +23,14 @@ set(PROJECT_SOURCE_FILES
 	source/scene/Scene.cpp
 	source/scene/GameObject.h
 	source/scene/GameObject.cpp
+	source/scene/Component.h
+	source/scene/Component.cpp
+	source/scene/components/MeshComponent.h
+	source/scene/components/MeshComponent.cpp
+	source/scene/components/CameraComponent.h
+	source/scene/components/CameraComponent.cpp
+
+
 
 
 )

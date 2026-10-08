@@ -11,6 +11,4 @@ public:
 
 private:
 
-	aEng::Material m_material;
-	std::shared_ptr<aEng::Mesh> m_mesh;
 };

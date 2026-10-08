@@ -10,6 +10,6 @@ public:
 	void Destroy() override;
 
 private:
-	aEng::Scene m_scene;
+	aEng::Scene* m_scene = nullptr;
 };
 
