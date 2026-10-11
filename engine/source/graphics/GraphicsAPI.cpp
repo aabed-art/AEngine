@@ -6,9 +6,15 @@
 
 namespace aEng
 {
-	std::shared_ptr<ShaderProgram> GraphicsAPI::CreateShaderProgram(const std::string& vertexSource, const std::string& fragmentSource)
-	{
-        //Vertex shader
+    bool GraphicsAPI::Init()
+    {
+        glEnable(GL_DEPTH_TEST);
+        return true;
+    }
+
+    std::shared_ptr<ShaderProgram> GraphicsAPI::CreateShaderProgram(const std::string& vertexSource,
+        const std::string& fragmentSource)
+    {
         GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
         const char* vertexShaderCStr = vertexSource.c_str();
         glShaderSource(vertexShader, 1, &vertexShaderCStr, nullptr);
@@ -20,12 +26,11 @@ namespace aEng
         {
             char infoLog[512];
             glGetShaderInfoLog(vertexShader, 512, nullptr, infoLog);
-            std::cerr << "ERROR:VERTEX_SHADER_COMPILATION_FAILED:" << infoLog << std::endl;
+            std::cerr << "ERROR:VERTEX_SHADER_COMPILATION_FAILED: " << infoLog << std::endl;
             return nullptr;
         }
 
-        //Fragment shader
-        GLint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+        GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
         const char* fragmentShaderSourceCStr = fragmentSource.c_str();
         glShaderSource(fragmentShader, 1, &fragmentShaderSourceCStr, nullptr);
         glCompileShader(fragmentShader);
@@ -35,12 +40,11 @@ namespace aEng
         {
             char infoLog[512];
             glGetShaderInfoLog(fragmentShader, 512, nullptr, infoLog);
-            std::cerr << "ERROR:FRAGMENT_SHADER_COMPILATION_FAILED:" << infoLog << std::endl;
+            std::cerr << "ERROR:FRAGMENT_SHADER_COMPILATION_FAILED: " << infoLog << std::endl;
             return nullptr;
         }
 
-        //BINDING
-        GLint shaderProgramID = glCreateProgram();
+        GLuint shaderProgramID = glCreateProgram();
         glAttachShader(shaderProgramID, vertexShader);
         glAttachShader(shaderProgramID, fragmentShader);
         glLinkProgram(shaderProgramID);
@@ -50,7 +54,7 @@ namespace aEng
         {
             char infoLog[512];
             glGetProgramInfoLog(shaderProgramID, 512, nullptr, infoLog);
-            std::cerr << "ERROR:SHADER_PROGRAM_LINKING_FAILED:" << infoLog << std::endl;
+            std::cerr << "ERROR:SHADER_PROGRAM_LINKING_FAILED: " << infoLog << std::endl;
             return nullptr;
         }
 
@@ -58,7 +62,7 @@ namespace aEng
         glDeleteShader(fragmentShader);
 
         return std::make_shared<ShaderProgram>(shaderProgramID);
-	}
+    }
 
     GLuint GraphicsAPI::CreateVertexBuffer(const std::vector<float>& vertices)
     {
@@ -67,18 +71,16 @@ namespace aEng
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
-
         return VBO;
     }
 
-    GLuint GraphicsAPI::CreateIndexBuffer(const std::vector<uint32_t>& indecies)
+    GLuint GraphicsAPI::CreateIndexBuffer(const std::vector<uint32_t>& indices)
     {
         GLuint EBO = 0;
         glGenBuffers(1, &EBO);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indecies.size() * sizeof(uint32_t), indecies.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(uint32_t), indices.data(), GL_STATIC_DRAW);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
         return EBO;
     }
 
@@ -89,7 +91,7 @@ namespace aEng
 
     void GraphicsAPI::ClearBuffers()
     {
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
     void GraphicsAPI::BindShaderProgram(ShaderProgram* shaderProgram)

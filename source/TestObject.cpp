@@ -1,16 +1,14 @@
-#include <TestObject.h>
+#include "TestObject.h"
 #include <GLFW/glfw3.h>
 #include <iostream>
 
 TestObject::TestObject()
 {
-
     std::string vertexShaderSource = R"(
         #version 330 core
         layout (location = 0) in vec3 position;
         layout (location = 1) in vec3 color;
 
-        
         out vec3 vColor;
 
         uniform mat4 uModel;
@@ -29,7 +27,6 @@ TestObject::TestObject()
         out vec4 FragColor;
 
         in vec3 vColor;
-        uniform vec4 uColor;
 
         void main()
         {
@@ -43,39 +40,60 @@ TestObject::TestObject()
     auto material = std::make_shared<aEng::Material>();
     material->SetShaderProgram(shaderProgram);
 
-    std::vector<float> verticies =
+    std::vector<float> vertices =
     {
-        0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-        -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f,
-        0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f
+        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
+        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+        0.5f, -0.5f, 0.5f, 1.0f, 1.0f, 0.0f,
+
+        0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.0f
     };
 
-    std::vector<unsigned int>indices =
+    std::vector<unsigned int> indices =
     {
+        // front face
         0, 1, 2,
-        0, 2, 3
+        0, 2, 3,
+        // top face
+        4, 5, 1,
+        4, 1, 0,
+        // right face
+        4, 0, 3,
+        4, 3, 7,
+        // left face
+        1, 5, 6,
+        1, 6, 2,
+        // bottom face
+        3, 2, 6,
+        3, 6, 7,
+        // back face
+        4, 7, 6,
+        4, 6, 5
     };
 
     aEng::VertexLayout vertexLayout;
 
-    //Position
+    // Postion
     vertexLayout.elements.push_back({
         0,
         3,
         GL_FLOAT,
         0
         });
-    //Color
+    // Color
     vertexLayout.elements.push_back({
         1,
         3,
         GL_FLOAT,
         sizeof(float) * 3
-        }); 
+        });
     vertexLayout.stride = sizeof(float) * 6;
 
-    auto mesh = std::make_shared<aEng::Mesh>(vertexLayout, verticies, indices);
+    auto mesh = std::make_shared<aEng::Mesh>(vertexLayout, vertices, indices);
 
     AddComponent(new aEng::MeshComponent(material, mesh));
 }
@@ -83,28 +101,4 @@ TestObject::TestObject()
 void TestObject::Update(float deltaTime)
 {
     aEng::GameObject::Update(deltaTime);
-
-    std::cout << "Current delta: " << deltaTime << std::endl;
-
-    auto position = GetPosition();
-    auto& input = aEng::Engine::GetInstance().GetInputManager();
-
-    if (input.IsKeyPressed(GLFW_KEY_A))
-    {
-        position.x -= 0.001f;
-    }
-    else if (input.IsKeyPressed(GLFW_KEY_D))
-    {
-        position.x += 0.001f;
-    }
-    else if (input.IsKeyPressed(GLFW_KEY_S))
-    {
-        position.y -= 0.001f;
-    }
-    else if (input.IsKeyPressed(GLFW_KEY_W))
-    {
-        position.y += 0.001f;
-    }
-
-    SetPosition(position);
 }

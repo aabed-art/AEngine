@@ -9,160 +9,187 @@
 
 namespace aEng
 {
-	void keyCallback(GLFWwindow* window, int key, int, int action, int)
-	{
-		auto& inputManager = aEng::Engine::GetInstance().GetInputManager();
-		if (action == GLFW_PRESS)
-		{
-			inputManager.SetKeyPressed(key, true);
-		}
-		else if (action == GLFW_RELEASE)
-		{
-			inputManager.SetKeyPressed(key, false);
-		}
-	}
+    void keyCallback(GLFWwindow* window, int key, int, int action, int)
+    {
+        auto& inputManager = aEng::Engine::GetInstance().GetInputManager();
+        if (action == GLFW_PRESS)
+        {
+            inputManager.SetKeyPressed(key, true);
+        }
+        else if (action == GLFW_RELEASE)
+        {
+            inputManager.SetKeyPressed(key, false);
+        }
+    }
 
-	Engine& Engine::GetInstance()
-	{
-		static Engine instance;
-		return instance;
-	}
+    void mouseButtonCallback(GLFWwindow* window, int button, int action, int)
+    {
+        auto& inputManager = aEng::Engine::GetInstance().GetInputManager();
+        if (action == GLFW_PRESS)
+        {
+            inputManager.SetMouseButtonPressed(button, true);
+        }
+        else if (action == GLFW_RELEASE)
+        {
+            inputManager.SetMouseButtonPressed(button, false);
+        }
+    }
 
-	bool Engine::Init(int width, int height)
-	{
-		if (!m_application)
-		{
-			return false;
-		}
+    void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos)
+    {
+        auto& inputManager = aEng::Engine::GetInstance().GetInputManager();
 
-		if (!glfwInit())
-		{
-			return false;
-		}
+        inputManager.SetMousePositionOld(inputManager.GetMousePositionCurrent());
 
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glm::vec2 currentPos(static_cast<float>(xpos), static_cast<float>(ypos));
+        inputManager.SetMousePositionCurrent(currentPos);
+    }
 
+    Engine& Engine::GetInstance()
+    {
+        static Engine instance;
+        return instance;
+    }
 
-		m_window = glfwCreateWindow(width, height, "GameEngine", nullptr, nullptr);
+    bool Engine::Init(int width, int height)
+    {
+        if (!m_application)
+        {
+            return false;
+        }
 
-		if (m_window == nullptr)
-		{
-			std::cout << "Error creating window" << std::endl;
-			glfwTerminate();
-			return false;
-		}
+#if defined (__linux__)
+        glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+#endif
 
-		glfwSetKeyCallback(m_window, keyCallback);
+        if (!glfwInit())
+        {
+            return false;
+        }
 
-		glfwMakeContextCurrent(m_window);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-		if (glewInit() != GLEW_OK)
-		{
-			glfwTerminate();
-			return false;
-		}
+        m_window = glfwCreateWindow(width, height, "GameDevelopmentProject", nullptr, nullptr);
 
-		return m_application->Init();
-	}
+        if (m_window == nullptr)
+        {
+            std::cout << "Error creating window" << std::endl;
+            glfwTerminate();
+            return false;
+        }
 
-	void Engine::Run()
-	{
-		if (!m_application)
-		{
-			return;
-		}
+        glfwSetKeyCallback(m_window, keyCallback);
+        glfwSetMouseButtonCallback(m_window, mouseButtonCallback);
+        glfwSetCursorPosCallback(m_window, cursorPositionCallback);
 
-		m_lastTimePoint = std::chrono::high_resolution_clock::now();
+        glfwMakeContextCurrent(m_window);
 
-		while (!m_application->NeedsToBeClosed() && !glfwWindowShouldClose(m_window))
-		{
-			glfwPollEvents();
+        if (glewInit() != GLEW_OK)
+        {
+            glfwTerminate();
+            return false;
+        }
 
-			auto now = std::chrono::high_resolution_clock::now();
-			float deltaTime = std::chrono::duration<float>(now - m_lastTimePoint).count();
-			m_lastTimePoint = now;
+        m_graphicsAPI.Init();
+        return m_application->Init();
+    }
 
-			m_application->Update(deltaTime);
+    void Engine::Run()
+    {
+        if (!m_application)
+        {
+            return;
+        }
 
-			m_graphicsAPI.SetClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-			m_graphicsAPI.ClearBuffers();
+        m_lastTimePoint = std::chrono::steady_clock::now();
 
-			CameraData cameraData;
+        while (!glfwWindowShouldClose(m_window) && !m_application->NeedsToBeClosed())
+        {
+            glfwPollEvents();
 
-			int width = 0;
-			int height = 0;
-			glfwGetWindowSize(m_window, &width, &height);
-			float aspect = static_cast<float>(width) / static_cast<float>(height);
-			
-			glViewport(0, 0, width, height);
+            auto now = std::chrono::steady_clock::now();
+            float deltaTime = std::chrono::duration<float>(now - m_lastTimePoint).count();
+            m_lastTimePoint = now;
 
-			if (m_currentScene)
-			{
-				if (auto cameraObject = m_currentScene->GetMainCamera())
-				{
-					// logic for matrices
+            m_application->Update(deltaTime);
 
-					auto cameraComponent = cameraObject->GetComponent<CameraComponent>();
-					if (cameraComponent)
-					{
-						cameraData.viewMatrix = cameraComponent->GetViewMatrix();
-						cameraData.projectionMatrix = cameraComponent->GetProjectionMatrix(aspect);
-					}
-				}
-			}
+            m_graphicsAPI.SetClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            m_graphicsAPI.ClearBuffers();
 
-			m_renderQueue.Draw(m_graphicsAPI, cameraData);
+            CameraData cameraData;
 
-			glfwSwapBuffers(m_window);
-		}
-	}
+            int width = 0;
+            int height = 0;
+            glfwGetWindowSize(m_window, &width, &height);
+            float aspect = static_cast<float>(width) / static_cast<float>(height);
 
-	void Engine::Destroy()
-	{
-		if (m_application)
-		{
-			m_application->Destroy();
-			m_application.reset();
-			glfwTerminate();
-			m_window = nullptr;
-		}
-	}
+            if (m_currentScene)
+            {
+                if (auto cameraObject = m_currentScene->GetMainCamera())
+                {
+                    // logic for matrices
+                    auto cameraComponent = cameraObject->GetComponent<CameraComponent>();
+                    if (cameraComponent)
+                    {
+                        cameraData.viewMatrix = cameraComponent->GetViewMatrix();
+                        cameraData.projectionMatrix = cameraComponent->GetProjectionMatrix(aspect);
+                    }
+                }
+            }
 
-	void Engine::SetApplication(Application* app)
-	{
-		m_application.reset(app);
-	}
+            m_renderQueue.Draw(m_graphicsAPI, cameraData);
 
-	Application* Engine::GetApplication()
-	{
-		return m_application.get();
-	}
+            glfwSwapBuffers(m_window);
 
-	InputManager& Engine::GetInputManager()
-	{
-		return m_inputManager;
-	}
+            m_inputManager.SetMousePositionOld(m_inputManager.GetMousePositionCurrent());
+        }
+    }
 
-	GraphicsAPI& Engine::GetGraphicsAPI()
-	{
-		return m_graphicsAPI;
-	}
+    void Engine::Destroy()
+    {
+        if (m_application)
+        {
+            m_application->Destroy();
+            m_application.reset();
+            glfwTerminate();
+            m_window = nullptr;
+        }
+    }
 
-	RenderQueue& Engine::GetRenderQueue()
-	{
-		return m_renderQueue;
-	}
+    void Engine::SetApplication(Application* app)
+    {
+        m_application.reset(app);
+    }
 
+    Application* Engine::GetApplication()
+    {
+        return m_application.get();
+    }
 
-	void Engine::SetScene(Scene* scene)
-	{
-		m_currentScene.reset(scene);
-	}
+    InputManager& Engine::GetInputManager()
+    {
+        return m_inputManager;
+    }
 
-	Scene* Engine::GetScene()
-	{
-		return m_currentScene.get();
-	}
+    GraphicsAPI& Engine::GetGraphicsAPI()
+    {
+        return m_graphicsAPI;
+    }
+
+    RenderQueue& Engine::GetRenderQueue()
+    {
+        return m_renderQueue;
+    }
+
+    void Engine::SetScene(Scene* scene)
+    {
+        m_currentScene.reset(scene);
+    }
+
+    Scene* Engine::GetScene()
+    {
+        return m_currentScene.get();
+    }
 }

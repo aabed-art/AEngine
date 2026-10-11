@@ -25,7 +25,7 @@ namespace aEng
 		m_objects.clear();
 	}
 
-	GameObject* Scene::CreateObject(const std::string& name, GameObject* parent = nullptr)
+	GameObject* Scene::CreateObject(const std::string& name, GameObject* parent)
 	{
 		auto obj = new GameObject();
 		obj->SetName(name);

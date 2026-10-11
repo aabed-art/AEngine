@@ -21,7 +21,6 @@ namespace aEng
 			shaderProgram->SetUniform("uView", cameraData.viewMatrix);
 			shaderProgram->SetUniform("uProjection", cameraData.projectionMatrix);
 
-			auto shaderProgram = command.material->GetShaderProgram();
 			graphicsAPI.BindMesh(command.mesh);
 			graphicsAPI.DrawMesh(command.mesh);
 		}
